@@ -25,10 +25,10 @@ jobs:
         run: yarn lint:all
       - name: Typecheck
         run: yarn tsc --noEmit
-      - name: Test
-        run: yarn test
       - name: Build
         run: yarn build:all
+      - name: Test
+        run: yarn test
       - name: Verify generated service
         working-directory: templates/create-production-service/skeleton
         run: |
