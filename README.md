@@ -42,6 +42,7 @@ flowchart LR
   CIProvider --> GitHubAPI[GitHub Actions REST API in live mode]
   DeployProvider --> Fixtures
   SecurityProvider --> Fixtures
+  SecurityProvider --> GitHubAPI
   Portal --> TechDocs[TechDocs]
 ```
 
@@ -53,7 +54,8 @@ flowchart LR
   documentation, dependencies, recent deployments, and an aggregate score.
 - **Mock mode:** deterministic backend fixtures are enabled by default and
   clearly labeled in the UI. Live mode reads completed GitHub Actions runs for
-  entities annotated with `github.com/project-slug`.
+  entities annotated with `github.com/project-slug`, including dependency
+  audit and container-scan step results when present.
 - **Golden Path:** a production-oriented Node.js + TypeScript scaffold with
   `/health`, tests, Docker, GitHub Actions, security checks, and TechDocs pages.
 - **Local-first workflow:** local generation and Catalog registration require no
@@ -113,19 +115,22 @@ Setting `DEVFORGE_MOCK_MODE=false` disables fixture data. The backend reads the
 latest completed GitHub Actions run for a Catalog entity's
 `github.com/project-slug`. Public repositories work without a token; configure
 `GITHUB_TOKEN` for private repositories or higher API limits. Live deployment
-and security integrations are not included, and Catalog documentation and
-dependency health are explicitly unavailable rather than presented as live
-results.
+health is not integrated. Live security reflects the `Dependency audit` and
+`Scan container` steps in the latest run; finding counts, score, and SAST stay
+unavailable because step conclusions do not provide those details. Catalog
+documentation and dependency health are also explicitly unavailable rather
+than presented as live results.
 
 ## 6. Plugin architecture
 
 The `service-health` frontend plugin contributes an entity content tab for
 service and website Components. It calls the `service-health` backend API,
 which aggregates typed CI, deployment, security, dependency, and documentation
-providers. The CI adapter uses the Catalog annotation and GitHub's Actions API
-in live mode; the other live adapters report unavailable until connected to
-real sources. Provider failures are surfaced as partial health data rather
-than hidden behind a success-shaped fallback.
+providers. CI and security adapters use the Catalog annotation and GitHub's
+Actions API in live mode. Security reads named audit and container-scan step
+conclusions; live deployment, documentation, and dependency health remain
+unavailable until connected to real sources. Provider failures are surfaced as
+partial health data rather than hidden behind a success-shaped fallback.
 
 The `service-health-common` package contains the shared API contract. The
 backend’s Scaffolder module also registers local publishing and catalog actions.
@@ -166,10 +171,12 @@ When publishing is enabled, select the repository owner (typically
 ## 9. Security and DevSecOps
 
 Generated CI runs `npm audit --audit-level=high` and builds the service
-container before scanning it with Trivy for critical and high findings. The
-service-health view displays deterministic example security findings and scan
-statuses in mock mode; these are illustrative fixtures, not results retrieved
-from a live GitHub Actions run.
+container before scanning it with Trivy for critical and high findings.
+DevForge's own CI audits workspace dependencies and scans the built backend
+image. Live Service Health displays the audit and container step conclusions;
+finding counts, scores, and SAST remain unavailable without machine-readable
+reports or a SAST scanner. Mock mode continues to use deterministic,
+illustrative security fixtures.
 
 Never commit a real `.env` file or token. Local catalog registration is
 restricted to generated descriptor paths, and the GitHub token remains in

@@ -29,35 +29,67 @@ describe('createServiceHealthProviders', () => {
         dependsOn: ['resource:default/postgresql'],
       },
     };
+    const fetchApi = jest
+      .fn<ReturnType<typeof fetch>, Parameters<typeof fetch>>()
+      .mockImplementation(async input => {
+        const url = String(input);
+        return new Response(
+          JSON.stringify(
+            url.includes('/actions/runs?')
+              ? {
+                  total_count: 1,
+                  workflow_runs: [
+                    {
+                      id: 42,
+                      status: 'completed',
+                      conclusion: 'success',
+                      updated_at: '2026-10-08T12:30:00Z',
+                    },
+                  ],
+                }
+              : {
+                  total_count: 1,
+                  jobs: [
+                    {
+                      steps: [
+                        { name: 'Dependency audit', conclusion: 'success' },
+                        { name: 'Scan container', conclusion: 'success' },
+                      ],
+                    },
+                  ],
+                },
+          ),
+          { status: 200 },
+        );
+      });
     const providers = createServiceHealthProviders(false, {
       lookupEntity: jest.fn().mockResolvedValue(entity),
-      fetchApi: jest
-        .fn<ReturnType<typeof fetch>, Parameters<typeof fetch>>()
-        .mockImplementation(
-          async () =>
-            new Response(
-              JSON.stringify({
-                total_count: 0,
-                workflow_runs: [],
-              }),
-              { status: 200 },
-            ),
-        ),
+      fetchApi,
     });
 
-    await expect(
+    const [ci, security] = await Promise.all([
       providers.ci.getCiHealth('component:default/threat-intel-api'),
-    ).resolves.toMatchObject({ status: 'UNAVAILABLE', score: null });
+      providers.security.getSecurityHealth(
+        'component:default/threat-intel-api',
+      ),
+    ]);
+    expect(ci).toMatchObject({ status: 'PASSING', score: 100 });
+    expect(security).toMatchObject({
+      status: 'PASSING',
+      dependencyAudit: 'PASS',
+      containerScan: 'PASS',
+    });
+    expect(fetchApi).toHaveBeenCalledTimes(2);
+    expect(
+      fetchApi.mock.calls.filter(([input]) =>
+        String(input).includes('/actions/runs?'),
+      ),
+    ).toHaveLength(1);
     await expect(
       providers.deployment.getDeploymentHealth(
         'component:default/threat-intel-api',
       ),
     ).rejects.toThrow('Deployment provider is not configured.');
-    await expect(
-      providers.security.getSecurityHealth(
-        'component:default/threat-intel-api',
-      ),
-    ).rejects.toThrow('Security provider is not configured.');
     await expect(
       providers.context.getDependencyHealth(
         'component:default/threat-intel-api',

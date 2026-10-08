@@ -97,7 +97,10 @@ export class ServiceHealthAggregator implements ServiceHealthReader {
       this.providers.security.getSecurityHealth(entityRef),
     ] as const);
 
-    if (results.every(result => result.status === 'rejected')) {
+    if (
+      results.every(result => result.status === 'rejected') &&
+      this.providers.dataSource !== 'live'
+    ) {
       throw new HealthProvidersUnavailableError();
     }
 
@@ -127,6 +130,7 @@ export class ServiceHealthAggregator implements ServiceHealthReader {
         status: 'UNAVAILABLE',
         score: null,
         findings: { critical: null, high: null, medium: null, secrets: null },
+        dependencyAudit: 'UNAVAILABLE',
         sast: 'UNAVAILABLE',
         containerScan: 'UNAVAILABLE',
       },

@@ -24,7 +24,12 @@ function statusColor(status: string): 'primary' | 'secondary' | 'default' {
   if (status === 'HEALTHY' || status === 'PASSING' || status === 'COMPLETE') {
     return 'primary';
   }
-  if (status === 'CRITICAL' || status === 'FAILING' || status === 'UNHEALTHY') {
+  if (
+    status === 'CRITICAL' ||
+    status === 'FAILING' ||
+    status === 'FAIL' ||
+    status === 'UNHEALTHY'
+  ) {
     return 'secondary';
   }
   return 'default';
@@ -136,6 +141,10 @@ export function ServiceHealthView({
             High: {health.security.findings.high ?? 'Unavailable'} · Medium:{' '}
             {health.security.findings.medium ?? 'Unavailable'} · Secrets:{' '}
             {health.security.findings.secrets ?? 'Unavailable'}
+          </Typography>
+          <Typography component="div">
+            Dependency audit:{' '}
+            <StatusChip status={health.security.dependencyAudit} />
           </Typography>
           <Typography>SAST: {health.security.sast}</Typography>
           <Typography>

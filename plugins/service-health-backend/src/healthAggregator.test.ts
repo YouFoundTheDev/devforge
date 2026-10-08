@@ -35,7 +35,8 @@ describe('ServiceHealthAggregator', () => {
       context: new DemoServiceContextProvider(),
     });
 
-    await expect(aggregator.getHealth(entityRef)).resolves.toMatchObject({
+    const health = await aggregator.getHealth(entityRef);
+    expect(health).toMatchObject({
       entityRef,
       status: 'HEALTHY',
       score: 94,
@@ -68,7 +69,8 @@ describe('ServiceHealthAggregator', () => {
       context: new DemoServiceContextProvider(),
     });
 
-    await expect(aggregator.getHealth(entityRef)).resolves.toMatchObject({
+    const health = await aggregator.getHealth(entityRef);
+    expect(health).toMatchObject({
       status: 'DEGRADED',
       score: null,
       ci: { status: 'UNAVAILABLE', score: null },
@@ -127,7 +129,8 @@ describe('ServiceHealthAggregator', () => {
       dataSource: 'live',
     });
 
-    await expect(aggregator.getHealth(entityRef)).resolves.toMatchObject({
+    const health = await aggregator.getHealth(entityRef);
+    expect(health).toMatchObject({
       dataSource: 'live',
       status: 'DEGRADED',
       ci: { status: 'PASSING', score: 100 },
@@ -136,6 +139,44 @@ describe('ServiceHealthAggregator', () => {
       documentation: { status: 'UNAVAILABLE' },
       sourceErrors: [{ provider: 'Deployment' }, { provider: 'Security' }],
     });
+  });
+
+  it('returns generic partial health when every live signal provider fails', async () => {
+    const failure = () => Promise.reject(new Error('private upstream details'));
+    const aggregator = new ServiceHealthAggregator({
+      ci: { getCiHealth: failure },
+      deployment: { getDeploymentHealth: failure },
+      security: { getSecurityHealth: failure },
+      context: {
+        getDocumentationHealth: async () => ({
+          status: 'UNAVAILABLE',
+          score: null,
+        }),
+        getDependencyHealth: async () => [],
+      },
+      dataSource: 'live',
+    });
+
+    const health = await aggregator.getHealth(entityRef);
+    expect(health).toMatchObject({
+      dataSource: 'live',
+      status: 'DEGRADED',
+      ci: { status: 'UNAVAILABLE' },
+      security: {
+        status: 'UNAVAILABLE',
+        dependencyAudit: 'UNAVAILABLE',
+        containerScan: 'UNAVAILABLE',
+      },
+      sourceErrors: [
+        { provider: 'CI', message: 'CI data is temporarily unavailable.' },
+        { provider: 'Deployment' },
+        {
+          provider: 'Security',
+          message: 'Security data is temporarily unavailable.',
+        },
+      ],
+    });
+    expect(JSON.stringify(health)).not.toContain('private upstream details');
   });
 
   it('fails explicitly when all signal providers fail', async () => {

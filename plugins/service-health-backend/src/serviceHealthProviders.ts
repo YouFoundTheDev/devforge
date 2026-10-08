@@ -1,7 +1,4 @@
-import type {
-  DeploymentHealth,
-  SecurityHealth,
-} from '@internal/plugin-service-health-common';
+import type { DeploymentHealth } from '@internal/plugin-service-health-common';
 import {
   DemoCiProvider,
   DemoDeploymentProvider,
@@ -10,17 +7,15 @@ import {
 } from './demoProviders';
 import type { CatalogEntityLookup } from './catalogEntityLookup';
 import { CatalogServiceContextProvider } from './catalogServiceContextProvider';
+import { GitHubActionsClient } from './githubActionsClient';
 import { GitHubActionsCiProvider } from './githubActionsCiProvider';
+import { GitHubActionsSecurityProvider } from './githubActionsSecurityProvider';
 import type { ServiceHealthProviders } from './healthAggregator';
 import { HealthProviderNotConfiguredError } from './providers';
 
 class UnconfiguredSignalProvider {
   async getDeploymentHealth(_entityRef: string): Promise<DeploymentHealth> {
     throw new HealthProviderNotConfiguredError('Deployment');
-  }
-
-  async getSecurityHealth(_entityRef: string): Promise<SecurityHealth> {
-    throw new HealthProviderNotConfiguredError('Security');
   }
 }
 
@@ -58,13 +53,14 @@ export function createServiceHealthProviders(
   }
 
   const unconfigured = new UnconfiguredSignalProvider();
+  const githubActions = new GitHubActionsClient(liveOptions.lookupEntity, {
+    token: liveOptions.githubToken,
+    fetchApi: liveOptions.fetchApi,
+  });
   return {
-    ci: new GitHubActionsCiProvider(liveOptions.lookupEntity, {
-      token: liveOptions.githubToken,
-      fetchApi: liveOptions.fetchApi,
-    }),
+    ci: new GitHubActionsCiProvider(githubActions),
     deployment: unconfigured,
-    security: unconfigured,
+    security: new GitHubActionsSecurityProvider(githubActions),
     context: new CatalogServiceContextProvider(liveOptions.lookupEntity),
     dataSource: 'live',
   };

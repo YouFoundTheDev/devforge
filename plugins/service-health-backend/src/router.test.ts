@@ -26,6 +26,7 @@ describe('service health API', () => {
       status: 'PASSING',
       score: 94,
       findings: { critical: 0, high: 1, medium: 2, secrets: 0 },
+      dependencyAudit: 'PASS',
       sast: 'PASS',
       containerScan: 'PASS',
     },

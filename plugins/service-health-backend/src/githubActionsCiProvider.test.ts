@@ -1,4 +1,5 @@
 import type { Entity } from '@backstage/catalog-model';
+import { GitHubActionsClient } from './githubActionsClient';
 import { GitHubActionsCiProvider } from './githubActionsCiProvider';
 
 const entity: Entity = {
@@ -29,6 +30,7 @@ describe('GitHubActionsCiProvider', () => {
           total_count: 4,
           workflow_runs: [
             {
+              id: 42,
               status: 'completed',
               conclusion: 'success',
               updated_at: '2026-10-08T12:30:00Z',
@@ -36,10 +38,11 @@ describe('GitHubActionsCiProvider', () => {
           ],
         }),
       );
-    const provider = new GitHubActionsCiProvider(async () => entity, {
+    const client = new GitHubActionsClient(async () => entity, {
       token: 'server-only-token',
       fetchApi,
     });
+    const provider = new GitHubActionsCiProvider(client);
 
     await expect(
       provider.getCiHealth('component:default/devforge-portal'),
@@ -60,22 +63,25 @@ describe('GitHubActionsCiProvider', () => {
   });
 
   it('maps a completed non-success run to failing CI', async () => {
-    const provider = new GitHubActionsCiProvider(async () => entity, {
-      fetchApi: jest
-        .fn<ReturnType<typeof fetch>, Parameters<typeof fetch>>()
-        .mockImplementation(() =>
-          response({
-            total_count: 1,
-            workflow_runs: [
-              {
-                status: 'completed',
-                conclusion: 'failure',
-                updated_at: '2026-10-08T12:30:00Z',
-              },
-            ],
-          }),
-        ),
-    });
+    const provider = new GitHubActionsCiProvider(
+      new GitHubActionsClient(async () => entity, {
+        fetchApi: jest
+          .fn<ReturnType<typeof fetch>, Parameters<typeof fetch>>()
+          .mockImplementation(() =>
+            response({
+              total_count: 1,
+              workflow_runs: [
+                {
+                  id: 42,
+                  status: 'completed',
+                  conclusion: 'failure',
+                  updated_at: '2026-10-08T12:30:00Z',
+                },
+              ],
+            }),
+          ),
+      }),
+    );
 
     await expect(
       provider.getCiHealth('component:default/devforge-portal'),
@@ -89,15 +95,19 @@ describe('GitHubActionsCiProvider', () => {
         response({ total_count: 0, workflow_runs: [] }),
       );
     const noRepository = new GitHubActionsCiProvider(
-      async () => ({
-        ...entity,
-        metadata: { name: 'local-only' },
-      }),
-      { fetchApi },
+      new GitHubActionsClient(
+        async () => ({
+          ...entity,
+          metadata: { name: 'local-only' },
+        }),
+        { fetchApi },
+      ),
     );
-    const noRuns = new GitHubActionsCiProvider(async () => entity, {
-      fetchApi,
-    });
+    const noRuns = new GitHubActionsCiProvider(
+      new GitHubActionsClient(async () => entity, {
+        fetchApi,
+      }),
+    );
 
     await expect(
       noRepository.getCiHealth('component:default/local-only'),
@@ -117,11 +127,13 @@ describe('GitHubActionsCiProvider', () => {
   });
 
   it('does not expose GitHub response or network errors', async () => {
-    const provider = new GitHubActionsCiProvider(async () => entity, {
-      fetchApi: jest
-        .fn<ReturnType<typeof fetch>, Parameters<typeof fetch>>()
-        .mockRejectedValue(new Error('sensitive response details')),
-    });
+    const provider = new GitHubActionsCiProvider(
+      new GitHubActionsClient(async () => entity, {
+        fetchApi: jest
+          .fn<ReturnType<typeof fetch>, Parameters<typeof fetch>>()
+          .mockRejectedValue(new Error('sensitive response details')),
+      }),
+    );
 
     await expect(
       provider.getCiHealth('component:default/devforge-portal'),
@@ -137,14 +149,16 @@ describe('GitHubActionsCiProvider', () => {
       Parameters<typeof fetch>
     >();
     const provider = new GitHubActionsCiProvider(
-      async () => ({
-        ...entity,
-        metadata: {
-          name: 'malformed',
-          annotations: { 'github.com/project-slug': 'owner/repo/extra' },
-        },
-      }),
-      { fetchApi },
+      new GitHubActionsClient(
+        async () => ({
+          ...entity,
+          metadata: {
+            name: 'malformed',
+            annotations: { 'github.com/project-slug': 'owner/repo/extra' },
+          },
+        }),
+        { fetchApi },
+      ),
     );
 
     await expect(
@@ -160,15 +174,21 @@ describe('GitHubActionsCiProvider', () => {
   it('converts GitHub API errors, malformed responses, and timeouts into a generic error', async () => {
     const failingResponses = [
       () => response({ message: 'private repository details' }, 403),
-      () => response({ total_count: 1, workflow_runs: [{ status: 'queued' }] }),
+      () =>
+        response({
+          total_count: 1,
+          workflow_runs: [{ id: 42, status: 'queued' }],
+        }),
     ];
 
     for (const fetchImplementation of failingResponses) {
-      const provider = new GitHubActionsCiProvider(async () => entity, {
-        fetchApi: jest
-          .fn<ReturnType<typeof fetch>, Parameters<typeof fetch>>()
-          .mockImplementation(fetchImplementation),
-      });
+      const provider = new GitHubActionsCiProvider(
+        new GitHubActionsClient(async () => entity, {
+          fetchApi: jest
+            .fn<ReturnType<typeof fetch>, Parameters<typeof fetch>>()
+            .mockImplementation(fetchImplementation),
+        }),
+      );
 
       await expect(
         provider.getCiHealth('component:default/devforge-portal'),
@@ -189,10 +209,12 @@ describe('GitHubActionsCiProvider', () => {
             }
           }),
       );
-    const timeoutProvider = new GitHubActionsCiProvider(async () => entity, {
-      fetchApi: timeoutFetch,
-      timeoutMs: 0,
-    });
+    const timeoutProvider = new GitHubActionsCiProvider(
+      new GitHubActionsClient(async () => entity, {
+        fetchApi: timeoutFetch,
+        timeoutMs: 0,
+      }),
+    );
 
     await expect(
       timeoutProvider.getCiHealth('component:default/devforge-portal'),

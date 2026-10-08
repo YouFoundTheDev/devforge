@@ -34,6 +34,7 @@ export const serviceHealthResponseSchema = z.object({
       medium: z.number().int().min(0).nullable(),
       secrets: z.number().int().min(0).nullable(),
     }),
+    dependencyAudit: z.enum(['PASS', 'FAIL', 'UNAVAILABLE']),
     sast: z.enum(['PASS', 'FAIL', 'UNAVAILABLE']),
     containerScan: z.enum(['PASS', 'FAIL', 'UNAVAILABLE']),
   }),

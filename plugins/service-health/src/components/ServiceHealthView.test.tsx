@@ -25,6 +25,7 @@ const health: ServiceHealthResponse = {
     status: 'PASSING',
     score: 94,
     findings: { critical: 0, high: 1, medium: 2, secrets: 0 },
+    dependencyAudit: 'PASS',
     sast: 'PASS',
     containerScan: 'PASS',
   },
@@ -72,6 +73,10 @@ describe('ServiceHealthView', () => {
     expect(
       screen.getByText(/Critical: 0 · High: 1 · Medium: 2 · Secrets: 0/),
     ).toBeInTheDocument();
+    expect(screen.getByText('Dependency audit:')).toBeInTheDocument();
+    expect(
+      screen.getByText('Dependency audit:').parentElement,
+    ).toHaveTextContent('PASS');
   });
 
   it('shows loading and retryable error states', () => {
