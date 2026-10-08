@@ -22,6 +22,40 @@ interface DemoFixture {
 }
 
 const fixtures: Record<string, DemoFixture> = {
+  'component:default/devforge-portal': {
+    ci: {
+      status: 'PASSING',
+      score: 100,
+      lastRun: '4 minutes ago',
+    },
+    deployment: {
+      status: 'HEALTHY',
+      score: 91,
+      version: 'v1.8.0',
+      environment: 'production',
+      lastDeployment: '12 minutes ago',
+      recentDeployments: [
+        { version: 'v1.8.0', status: 'SUCCESS' },
+        { version: 'v1.7.2', status: 'SUCCESS' },
+        { version: 'v1.7.1', status: 'SUCCESS' },
+      ],
+    },
+    security: {
+      status: 'PASSING',
+      score: 94,
+      findings: { critical: 0, high: 1, medium: 2, secrets: 0 },
+      sast: 'PASS',
+      containerScan: 'PASS',
+    },
+    documentation: { status: 'COMPLETE', score: 92 },
+    dependencies: [
+      {
+        entityRef: 'component:default/service-health-plugin',
+        name: 'service-health-plugin',
+        status: 'HEALTHY',
+      },
+    ],
+  },
   'component:default/threat-intel-api': {
     ci: {
       status: 'PASSING',

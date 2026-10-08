@@ -18,6 +18,7 @@ export interface ServiceHealthProviders {
   deployment: DeploymentProvider;
   security: SecurityProvider;
   context: ServiceContextProvider;
+  dataSource?: ServiceHealthResponse['dataSource'];
 }
 
 export interface ServiceHealthReader {
@@ -148,7 +149,7 @@ export class ServiceHealthAggregator implements ServiceHealthReader {
         security.score,
         documentation.score,
       ]),
-      dataSource: 'demo',
+      dataSource: this.providers.dataSource ?? 'demo',
       ci,
       deployment,
       security,

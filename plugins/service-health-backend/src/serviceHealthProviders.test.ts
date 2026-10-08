@@ -1,3 +1,4 @@
+import type { Entity } from '@backstage/catalog-model';
 import { createServiceHealthProviders } from './serviceHealthProviders';
 
 describe('createServiceHealthProviders', () => {
@@ -12,14 +13,41 @@ describe('createServiceHealthProviders', () => {
         'component:default/threat-intel-api',
       ),
     ).resolves.toMatchObject({ version: 'v1.4.2' });
+    expect(providers.dataSource).toBe('demo');
   });
 
-  it('fails explicitly when live provider adapters are not configured', async () => {
-    const providers = createServiceHealthProviders(false);
+  it('uses GitHub Actions and Catalog context in live mode', async () => {
+    const entity: Entity = {
+      apiVersion: 'backstage.io/v1alpha1',
+      kind: 'Component',
+      metadata: {
+        name: 'threat-intel-api',
+        annotations: { 'github.com/project-slug': 'YouFoundTheDev/devforge' },
+      },
+      spec: {
+        type: 'service',
+        dependsOn: ['resource:default/postgresql'],
+      },
+    };
+    const providers = createServiceHealthProviders(false, {
+      lookupEntity: jest.fn().mockResolvedValue(entity),
+      fetchApi: jest
+        .fn<ReturnType<typeof fetch>, Parameters<typeof fetch>>()
+        .mockImplementation(
+          async () =>
+            new Response(
+              JSON.stringify({
+                total_count: 0,
+                workflow_runs: [],
+              }),
+              { status: 200 },
+            ),
+        ),
+    });
 
     await expect(
       providers.ci.getCiHealth('component:default/threat-intel-api'),
-    ).rejects.toThrow('CI provider is not configured.');
+    ).resolves.toMatchObject({ status: 'UNAVAILABLE', score: null });
     await expect(
       providers.deployment.getDeploymentHealth(
         'component:default/threat-intel-api',
@@ -30,5 +58,17 @@ describe('createServiceHealthProviders', () => {
         'component:default/threat-intel-api',
       ),
     ).rejects.toThrow('Security provider is not configured.');
+    await expect(
+      providers.context.getDependencyHealth(
+        'component:default/threat-intel-api',
+      ),
+    ).resolves.toEqual([
+      {
+        entityRef: 'resource:default/postgresql',
+        name: 'PostgreSQL',
+        status: 'UNAVAILABLE',
+      },
+    ]);
+    expect(providers.dataSource).toBe('live');
   });
 });

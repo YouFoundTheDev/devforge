@@ -18,6 +18,7 @@
   "dependencies": {
     "@backstage/backend-plugin-api": "^1.10.1",
     "@backstage/catalog-model": "^1.10.1",
+    "@backstage/integration": "^2.1.2",
     "@backstage/plugin-catalog-node": "^2.2.5",
     "@backstage/plugin-scaffolder-node": "^0.13.7",
     "@internal/plugin-service-health-common": "workspace:*",

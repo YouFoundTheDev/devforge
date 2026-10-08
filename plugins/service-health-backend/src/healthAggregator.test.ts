@@ -98,6 +98,46 @@ describe('ServiceHealthAggregator', () => {
     });
   });
 
+  it('returns partial live health when only GitHub CI is configured', async () => {
+    const aggregator = new ServiceHealthAggregator({
+      ci: {
+        getCiHealth: async () => ({
+          status: 'PASSING',
+          score: 100,
+          lastRun: '2026-10-08T12:00:00.000Z',
+        }),
+      },
+      deployment: {
+        getDeploymentHealth: async () => {
+          throw new Error('not configured');
+        },
+      },
+      security: {
+        getSecurityHealth: async () => {
+          throw new Error('not configured');
+        },
+      },
+      context: {
+        getDocumentationHealth: async () => ({
+          status: 'UNAVAILABLE',
+          score: null,
+        }),
+        getDependencyHealth: async () => [],
+      },
+      dataSource: 'live',
+    });
+
+    await expect(aggregator.getHealth(entityRef)).resolves.toMatchObject({
+      dataSource: 'live',
+      status: 'DEGRADED',
+      ci: { status: 'PASSING', score: 100 },
+      deployment: { status: 'UNAVAILABLE' },
+      security: { status: 'UNAVAILABLE' },
+      documentation: { status: 'UNAVAILABLE' },
+      sourceErrors: [{ provider: 'Deployment' }, { provider: 'Security' }],
+    });
+  });
+
   it('fails explicitly when all signal providers fail', async () => {
     const unavailable = () => Promise.reject(new Error('offline'));
     const deployment: DeploymentProvider = {

@@ -1,8 +1,8 @@
 import type { Entity } from '@backstage/catalog-model';
-import { isServiceEntity } from './entityFilter';
+import { isHealthEntity } from './entityFilter';
 
-describe('isServiceEntity', () => {
-  it('matches only service Components', () => {
+describe('isHealthEntity', () => {
+  it('matches service and website Components only', () => {
     const service: Entity = {
       apiVersion: 'backstage.io/v1alpha1',
       kind: 'Component',
@@ -14,13 +14,19 @@ describe('isServiceEntity', () => {
       metadata: { name: 'service-health-plugin' },
       spec: { type: 'library' },
     };
+    const website: Entity = {
+      ...service,
+      metadata: { name: 'devforge-portal' },
+      spec: { type: 'website' },
+    };
     const system: Entity = {
       ...service,
       kind: 'System',
     };
 
-    expect(isServiceEntity(service)).toBe(true);
-    expect(isServiceEntity(library)).toBe(false);
-    expect(isServiceEntity(system)).toBe(false);
+    expect(isHealthEntity(service)).toBe(true);
+    expect(isHealthEntity(website)).toBe(true);
+    expect(isHealthEntity(library)).toBe(false);
+    expect(isHealthEntity(system)).toBe(false);
   });
 });

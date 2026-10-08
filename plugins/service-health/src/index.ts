@@ -1,14 +1,14 @@
 import { createFrontendPlugin } from '@backstage/frontend-plugin-api';
 import { EntityContentBlueprint } from '@backstage/plugin-catalog-react/alpha';
 import { createElement } from 'react';
-import { isServiceEntity } from './entityFilter';
+import { isHealthEntity } from './entityFilter';
 
 const serviceHealthContent = EntityContentBlueprint.make({
   name: 'service-health',
   params: {
     path: '/service-health',
     title: 'Service Health',
-    filter: isServiceEntity,
+    filter: isHealthEntity,
     loader: () =>
       import('./components/ServiceHealthContent').then(
         ({ ServiceHealthContent }) => createElement(ServiceHealthContent),

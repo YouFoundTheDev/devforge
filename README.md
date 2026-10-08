@@ -14,8 +14,8 @@ scanning, and TechDocs. It is a local demo—not a production deployment.
 ## 1. Project overview
 
 DevForge gives engineers a single place to discover services, understand owners
-and dependencies, scaffold a standard Node.js service, and review demo health
-signals. Its golden path can publish to GitHub when configured, or generate and
+and dependencies, scaffold a standard Node.js service, and review service
+health. Its golden path can publish to GitHub when configured, or generate and
 register a service entirely on the local machine with no credentials.
 
 ## 2. Architecture
@@ -39,6 +39,7 @@ flowchart LR
   HealthAPI --> DeployProvider[Deployment provider interface]
   HealthAPI --> SecurityProvider[Security provider interface]
   CIProvider --> Fixtures[Deterministic demo fixtures]
+  CIProvider --> GitHubAPI[GitHub Actions REST API in live mode]
   DeployProvider --> Fixtures
   SecurityProvider --> Fixtures
   Portal --> TechDocs[TechDocs]
@@ -51,7 +52,8 @@ flowchart LR
 - **Service Health plugin:** an entity page showing CI, deployment, security,
   documentation, dependencies, recent deployments, and an aggregate score.
 - **Mock mode:** deterministic backend fixtures are enabled by default and
-  clearly labeled in the UI.
+  clearly labeled in the UI. Live mode reads completed GitHub Actions runs for
+  entities annotated with `github.com/project-slug`.
 - **Golden Path:** a production-oriented Node.js + TypeScript scaffold with
   `/health`, tests, Docker, GitHub Actions, security checks, and TechDocs pages.
 - **Local-first workflow:** local generation and Catalog registration require no
@@ -101,25 +103,29 @@ set +a
 yarn start
 ```
 
-| Variable | Default | Purpose |
-| --- | --- | --- |
-| `DEVFORGE_MOCK_MODE` | `true` | Use stable CI, deployment, security, and dependency fixtures. Keep enabled for the standalone demo. |
-| `GITHUB_TOKEN` | unset | Optional backend-only GitHub integration credential for repository publishing. Never sent to the frontend. |
-| `GITHUB_ORG` | unset | Suggested GitHub owner to select in the template’s repository picker. |
+| Variable             | Default | Purpose                                                                                                                        |
+| -------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| `DEVFORGE_MOCK_MODE` | `true`  | Use stable CI, deployment, security, and dependency fixtures; set `false` to query GitHub Actions for annotated entities.      |
+| `GITHUB_TOKEN`       | unset   | Optional backend-only GitHub credential for repository publishing and private-repository CI reads. Never sent to the frontend. |
+| `GITHUB_ORG`         | unset   | Suggested GitHub owner to select in the template’s repository picker.                                                          |
 
-Setting `DEVFORGE_MOCK_MODE=false` disables fixture data. Live CI, deployment,
-and security adapters are intentionally not included; their provider
-interfaces make those integrations replaceable without presenting fake live
+Setting `DEVFORGE_MOCK_MODE=false` disables fixture data. The backend reads the
+latest completed GitHub Actions run for a Catalog entity's
+`github.com/project-slug`. Public repositories work without a token; configure
+`GITHUB_TOKEN` for private repositories or higher API limits. Live deployment
+and security integrations are not included, and Catalog documentation and
+dependency health are explicitly unavailable rather than presented as live
 results.
 
 ## 6. Plugin architecture
 
 The `service-health` frontend plugin contributes an entity content tab for
-service Components. It calls the `service-health` backend API, which aggregates
-typed CI, deployment, security, dependency, and documentation providers. Each
-provider has a small interface and deterministic demo implementation. Provider
-failures are surfaced as partial health data rather than hidden behind a
-success-shaped fallback.
+service and website Components. It calls the `service-health` backend API,
+which aggregates typed CI, deployment, security, dependency, and documentation
+providers. The CI adapter uses the Catalog annotation and GitHub's Actions API
+in live mode; the other live adapters report unavailable until connected to
+real sources. Provider failures are surfaced as partial health data rather
+than hidden behind a success-shaped fallback.
 
 The `service-health-common` package contains the shared API contract. The
 backend’s Scaffolder module also registers local publishing and catalog actions.
@@ -149,11 +155,13 @@ and catalog registration actions are used.
 
 ## 8. GitHub integration
 
-The GitHub integration reads `GITHUB_TOKEN` on the backend only. The token is
-not embedded in generated files, browser configuration, or task output. Leave
-publishing unchecked to use the complete local path without credentials. When
-publishing is enabled, select the repository owner (typically `GITHUB_ORG`) in
-the repository picker.
+The GitHub integration reads `GITHUB_TOKEN` on the backend only. In live
+Service Health mode it is used for GitHub Actions reads (optional for public
+repositories); in the Scaffolder it enables repository publishing. The token
+is not embedded in generated files, browser configuration, or task output.
+Leave publishing unchecked to use the complete local path without credentials.
+When publishing is enabled, select the repository owner (typically
+`GITHUB_ORG`) in the repository picker.
 
 ## 9. Security and DevSecOps
 
@@ -183,7 +191,7 @@ not backed by a real provider are explicitly reported as unavailable.
 
 ## 11. Future improvements
 
-- Implement live GitHub Actions, deployment, and security provider adapters.
+- - Implement live deployment and security provider adapters.
 - Add broader service-health and generated-service integration tests.
 - Add production storage and deployment configurations for a real platform.
 - Add organization-specific TechDocs publishing and access controls.

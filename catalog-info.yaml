@@ -8,10 +8,10 @@ metadata:
     - react
     - typescript
   annotations:
-    github.com/project-slug: devforge-labs/devforge-portal
+    github.com/project-slug: YouFoundTheDev/devforge
     backstage.io/techdocs-ref: dir:docs/services/devforge-portal
   links:
-    - url: https://github.com/devforge-labs/devforge-portal
+    - url: https://github.com/YouFoundTheDev/devforge
       title: Source repository
       icon: github
 spec:
