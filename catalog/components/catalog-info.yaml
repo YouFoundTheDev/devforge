@@ -1,0 +1,110 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: service-health-plugin
+  description: Backstage plugin for aggregated service health and deployment status.
+  tags:
+    - backstage-plugin
+    - react
+    - typescript
+  annotations:
+    github.com/project-slug: devforge-labs/service-health-plugin
+    backstage.io/techdocs-ref: dir:../../docs/services/service-health-plugin
+  links:
+    - url: https://github.com/devforge-labs/service-health-plugin
+      title: Source repository
+      icon: github
+spec:
+  type: library
+  lifecycle: production
+  owner: platform-team
+  system: devforge-platform
+  providesApis:
+    - service-health-v1
+  dependsOn:
+    - component:default/identity-service
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: threat-intel-api
+  description: Threat intelligence service for indicator enrichment and reputation.
+  tags:
+    - nodejs
+    - typescript
+    - cybersecurity
+    - postgresql
+    - redis
+  annotations:
+    github.com/project-slug: devforge-labs/threat-intel-api
+    backstage.io/techdocs-ref: dir:../../docs/services/threat-intel-api
+  links:
+    - url: https://github.com/devforge-labs/threat-intel-api
+      title: Source repository
+      icon: github
+spec:
+  type: service
+  lifecycle: production
+  owner: security-team
+  system: devforge-platform
+  providesApis:
+    - threat-intel-v1
+  dependsOn:
+    - resource:default/postgresql
+    - resource:default/redis
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: incident-analysis-api
+  description: Incident triage service that enriches investigations with threat data.
+  tags:
+    - nodejs
+    - typescript
+    - cybersecurity
+    - postgresql
+  annotations:
+    github.com/project-slug: devforge-labs/incident-analysis-api
+    backstage.io/techdocs-ref: dir:../../docs/services/incident-analysis-api
+  links:
+    - url: https://github.com/devforge-labs/incident-analysis-api
+      title: Source repository
+      icon: github
+spec:
+  type: service
+  lifecycle: production
+  owner: security-team
+  system: devforge-platform
+  providesApis:
+    - incident-analysis-v1
+  consumesApis:
+    - threat-intel-v1
+  dependsOn:
+    - component:default/threat-intel-api
+    - resource:default/postgresql
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: identity-service
+  description: Shared identity service for user and service identity.
+  tags:
+    - nodejs
+    - typescript
+    - postgresql
+  annotations:
+    github.com/project-slug: devforge-labs/identity-service
+    backstage.io/techdocs-ref: dir:../../docs/services/identity-service
+  links:
+    - url: https://github.com/devforge-labs/identity-service
+      title: Source repository
+      icon: github
+spec:
+  type: service
+  lifecycle: production
+  owner: backend-team
+  system: devforge-platform
+  providesApis:
+    - identity-v1
+  dependsOn:
+    - resource:default/postgresql

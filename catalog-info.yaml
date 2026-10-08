@@ -1,13 +1,28 @@
 apiVersion: backstage.io/v1alpha1
 kind: Component
 metadata:
-  name: devforge
-  description: An example of a Backstage application.
-  # Example for optional annotations
-  # annotations:
-  #   github.com/project-slug: backstage/backstage
-  #   backstage.io/techdocs-ref: dir:.
+  name: devforge-portal
+  description: Internal developer portal for service discovery and self-service.
+  tags:
+    - backstage
+    - react
+    - typescript
+  annotations:
+    github.com/project-slug: devforge-labs/devforge-portal
+    backstage.io/techdocs-ref: dir:docs/services/devforge-portal
+  links:
+    - url: https://github.com/devforge-labs/devforge-portal
+      title: Source repository
+      icon: github
 spec:
   type: website
-  owner: john@example.com
-  lifecycle: experimental
+  owner: platform-team
+  lifecycle: production
+  system: devforge-platform
+  dependsOn:
+    - component:default/service-health-plugin
+  consumesApis:
+    - service-health-v1
+    - threat-intel-v1
+    - incident-analysis-v1
+    - identity-v1

@@ -1,0 +1,7 @@
+site_name: DevForge Service
+nav:
+  - Overview: index.md
+  - Architecture: architecture.md
+  - Deployment: deployment.md
+plugins:
+  - techdocs-core

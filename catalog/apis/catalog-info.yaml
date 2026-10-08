@@ -1,0 +1,103 @@
+apiVersion: backstage.io/v1alpha1
+kind: API
+metadata:
+  name: service-health-v1
+  description: Aggregated CI, deployment, security, and dependency health.
+spec:
+  type: openapi
+  lifecycle: production
+  owner: platform-team
+  system: devforge-platform
+  definition: |
+    openapi: 3.0.3
+    info:
+      title: DevForge Service Health API
+      version: v1
+    paths:
+      /health:
+        get:
+          summary: Return the aggregate service health status
+          responses:
+            '200':
+              description: Current health status
+---
+apiVersion: backstage.io/v1alpha1
+kind: API
+metadata:
+  name: threat-intel-v1
+  description: Threat indicator lookup and enrichment API.
+spec:
+  type: openapi
+  lifecycle: production
+  owner: security-team
+  system: devforge-platform
+  definition: |
+    openapi: 3.0.3
+    info:
+      title: Threat Intelligence API
+      version: v1
+    paths:
+      /indicators/{indicatorId}:
+        get:
+          summary: Retrieve an enriched threat indicator
+          parameters:
+            - name: indicatorId
+              in: path
+              required: true
+              schema:
+                type: string
+          responses:
+            '200':
+              description: Enriched indicator
+---
+apiVersion: backstage.io/v1alpha1
+kind: API
+metadata:
+  name: incident-analysis-v1
+  description: Security incident triage and analysis API.
+spec:
+  type: openapi
+  lifecycle: production
+  owner: security-team
+  system: devforge-platform
+  definition: |
+    openapi: 3.0.3
+    info:
+      title: Incident Analysis API
+      version: v1
+    paths:
+      /incidents:
+        get:
+          summary: List security incidents
+          responses:
+            '200':
+              description: Incident list
+---
+apiVersion: backstage.io/v1alpha1
+kind: API
+metadata:
+  name: identity-v1
+  description: Internal identity and service ownership API.
+spec:
+  type: openapi
+  lifecycle: production
+  owner: backend-team
+  system: devforge-platform
+  definition: |
+    openapi: 3.0.3
+    info:
+      title: Identity Service API
+      version: v1
+    paths:
+      /users/{userId}:
+        get:
+          summary: Retrieve an internal user profile
+          parameters:
+            - name: userId
+              in: path
+              required: true
+              schema:
+                type: string
+          responses:
+            '200':
+              description: User profile

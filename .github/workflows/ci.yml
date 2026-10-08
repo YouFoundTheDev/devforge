@@ -1,0 +1,39 @@
+name: DevForge CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Enable Corepack
+        run: corepack enable
+      - name: Install
+        run: yarn install --immutable
+      - name: Check configuration
+        run: yarn backstage-cli config:check --strict
+      - name: Lint
+        run: yarn lint:all
+      - name: Typecheck
+        run: yarn tsc --noEmit
+      - name: Test
+        run: yarn test
+      - name: Build
+        run: yarn build:all
+      - name: Verify generated service
+        working-directory: templates/create-production-service/skeleton
+        run: |
+          npm ci
+          npm run lint
+          npm run typecheck
+          npm test
+          npm run build

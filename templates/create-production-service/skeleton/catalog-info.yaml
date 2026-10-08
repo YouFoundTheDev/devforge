@@ -1,0 +1,26 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: ${{ values.name }}
+  description: ${{ values.description }}
+  tags:
+    - nodejs
+    - typescript
+  annotations:
+    backstage.io/techdocs-ref: dir:.
+    devforge.io/database: ${{ values.database }}
+    devforge.io/deployment-target: ${{ values.deploymentTarget }}
+spec:
+  type: service
+  lifecycle: production
+  owner: ${{ values.owner }}
+  system: devforge-platform
+  providesApis:
+    - ${{ values.name }}-api
+{% if values.database == 'postgresql' %}
+  dependsOn:
+    - resource:default/postgresql
+{% elif values.database == 'redis' %}
+  dependsOn:
+    - resource:default/redis
+{% endif %}

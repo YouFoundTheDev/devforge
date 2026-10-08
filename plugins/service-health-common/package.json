@@ -1,0 +1,26 @@
+{
+  "name": "@internal/plugin-service-health-common",
+  "version": "0.1.0",
+  "private": true,
+  "main": "dist/index.cjs.js",
+  "types": "src/index.ts",
+  "backstage": {
+    "role": "node-library"
+  },
+  "scripts": {
+    "build": "backstage-cli package build",
+    "clean": "backstage-cli package clean",
+    "lint": "backstage-cli package lint",
+    "test": "backstage-cli package test"
+  },
+  "dependencies": {
+    "zod": "^4.0.0"
+  },
+  "devDependencies": {
+    "@backstage/cli": "^0.36.6",
+    "jest": "~30.2.0"
+  },
+  "files": [
+    "dist"
+  ]
+}

@@ -1,0 +1,5 @@
+site_name: DevForge Portal
+nav:
+  - Overview: index.md
+plugins:
+  - techdocs-core

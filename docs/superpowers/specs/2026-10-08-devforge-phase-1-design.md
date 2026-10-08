@@ -18,7 +18,8 @@ dependency relations resolve in the Catalog.
 - Generate a standard Backstage application using the official
   `@backstage/create-app` scaffold.
 - Inspect and record the scaffolded Backstage version before choosing any
-  version-sensitive Backstage APIs or configuration.
+  version-sensitive Backstage APIs or configuration. The generated app is
+  Backstage `1.55.0`.
 - Add catalog YAML for:
   - System: `devforge-platform`.
   - Components: `devforge-portal`, `service-health-plugin`,
@@ -77,6 +78,9 @@ phase; Phase 1 does not claim that TechDocs has been configured or rendered.
 
 - Confirm the installed Backstage version from the scaffolded dependency
   manifests before adding version-sensitive configuration.
+- Keep the upstream Yarn `got` patch required by this scaffold in
+  `.yarn/patches/` so clean installs can resolve the generated dependency set;
+  document its upstream origin and license in the project notices.
 - Validate entity YAML and Catalog reference resolution using the catalog
   validation tooling available in that installed version.
 - Run the scaffold's relevant lint, typecheck, test, and build commands.

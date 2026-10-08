@@ -1,0 +1,29 @@
+apiVersion: backstage.io/v1alpha1
+kind: Group
+metadata:
+  name: platform-team
+  description: Builds and operates the DevForge developer platform.
+spec:
+  type: team
+  children: []
+  members: []
+---
+apiVersion: backstage.io/v1alpha1
+kind: Group
+metadata:
+  name: security-team
+  description: Owns threat intelligence and incident analysis capabilities.
+spec:
+  type: team
+  children: []
+  members: []
+---
+apiVersion: backstage.io/v1alpha1
+kind: Group
+metadata:
+  name: backend-team
+  description: Owns shared identity and backend platform services.
+spec:
+  type: team
+  children: []
+  members: []

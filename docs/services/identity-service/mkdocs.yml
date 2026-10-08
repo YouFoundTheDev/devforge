@@ -1,0 +1,5 @@
+site_name: Identity Service
+nav:
+  - Overview: index.md
+plugins:
+  - techdocs-core

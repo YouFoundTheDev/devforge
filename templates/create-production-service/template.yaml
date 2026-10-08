@@ -1,0 +1,163 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: create-production-service
+  title: Create Production Service
+  description: Generate a documented, tested Node.js service with CI and security scanning.
+  tags:
+    - golden-path
+    - nodejs
+    - typescript
+spec:
+  owner: group:default/platform-team
+  type: service
+  parameters:
+    - title: Service details
+      required:
+        - name
+        - description
+        - owner
+        - language
+        - database
+        - deploymentTarget
+      properties:
+        name:
+          title: Service name
+          type: string
+          description: Lowercase kebab-case name for the new service.
+          ui:field: EntityNamePicker
+          ui:autofocus: true
+        description:
+          title: Description
+          type: string
+          description: What this service does.
+          minLength: 10
+        owner:
+          title: Owner
+          type: string
+          description: Team responsible for operating this service.
+          ui:field: OwnerPicker
+          ui:options:
+            catalogFilter:
+              kind: Group
+        language:
+          title: Language
+          type: string
+          default: nodejs-typescript
+          enum:
+            - nodejs-typescript
+          ui:enumNames:
+            - Node.js + TypeScript
+        database:
+          title: Database
+          type: string
+          default: none
+          enum:
+            - none
+            - postgresql
+            - redis
+          ui:enumNames:
+            - None
+            - PostgreSQL
+            - Redis
+        deploymentTarget:
+          title: Deployment target
+          type: string
+          default: docker
+          enum:
+            - local
+            - docker
+            - kubernetes
+          ui:enumNames:
+            - Local development
+            - Docker
+            - Kubernetes
+    - title: GitHub publishing (optional)
+      properties:
+        publishToGitHub:
+          title: Publish to GitHub
+          type: boolean
+          default: false
+          description: Requires a configured GitHub integration and GITHUB_TOKEN.
+      dependencies:
+        publishToGitHub:
+          oneOf:
+            - properties:
+                publishToGitHub:
+                  const: false
+            - properties:
+                publishToGitHub:
+                  const: true
+                repoUrl:
+                  title: GitHub repository
+                  type: string
+                  ui:field: RepoUrlPicker
+                  ui:options:
+                    allowedHosts:
+                      - github.com
+              required:
+                - repoUrl
+  steps:
+    - id: fetch-base
+      name: Generate service files
+      action: fetch:template
+      input:
+        url: ./skeleton
+        copyWithoutRender:
+          - .github/workflows/ci.yml
+        values:
+          name: ${{ parameters.name }}
+          description: ${{ parameters.description }}
+          owner: ${{ parameters.owner }}
+          database: ${{ parameters.database }}
+          deploymentTarget: ${{ parameters.deploymentTarget }}
+    - id: publish
+      name: Publish repository to GitHub
+      if: ${{ parameters.publishToGitHub }}
+      action: publish:github
+      input:
+        description: ${{ parameters.description }}
+        repoUrl: ${{ parameters.repoUrl }}
+        defaultBranch: main
+    - id: publishLocal
+      name: Save service to the local workspace
+      if: ${{ not parameters.publishToGitHub }}
+      action: devforge:publish:local
+      input:
+        name: ${{ parameters.name }}
+    - id: register-component
+      name: Register service in the catalog
+      if: ${{ parameters.publishToGitHub }}
+      action: catalog:register
+      input:
+        repoContentsUrl: ${{ steps.publish.output.repoContentsUrl }}
+        catalogInfoPath: /catalog-info.yaml
+    - id: register-component-local
+      name: Register local service in the catalog
+      if: ${{ not parameters.publishToGitHub }}
+      action: devforge:catalog:register-local
+      input:
+        name: ${{ parameters.name }}
+        descriptor: catalog-info.yaml
+    - id: register-api
+      name: Register service API in the catalog
+      if: ${{ parameters.publishToGitHub }}
+      action: catalog:register
+      input:
+        repoContentsUrl: ${{ steps.publish.output.repoContentsUrl }}
+        catalogInfoPath: /api-info.yaml
+    - id: register-api-local
+      name: Register local service API in the catalog
+      if: ${{ not parameters.publishToGitHub }}
+      action: devforge:catalog:register-local
+      input:
+        name: ${{ parameters.name }}
+        descriptor: api-info.yaml
+  output:
+    text:
+      - title: Next steps
+        content: >-
+          The service scaffold includes a runnable /health endpoint, tests,
+          Docker support, CI, security scans, and TechDocs pages. Enable GitHub
+          publishing to create a repository; otherwise files are saved under
+          generated-services/ and registered locally in the catalog.

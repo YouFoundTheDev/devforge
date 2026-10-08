@@ -1,0 +1,25 @@
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: postgresql
+  description: PostgreSQL datastore used by DevForge backend services.
+  tags:
+    - postgresql
+    - database
+spec:
+  type: database
+  owner: backend-team
+  system: devforge-platform
+---
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: redis
+  description: Redis cache used for threat intelligence lookups.
+  tags:
+    - redis
+    - cache
+spec:
+  type: cache
+  owner: security-team
+  system: devforge-platform

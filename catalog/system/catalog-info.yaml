@@ -1,0 +1,7 @@
+apiVersion: backstage.io/v1alpha1
+kind: System
+metadata:
+  name: devforge-platform
+  description: Developer platform for secure service delivery and operations.
+spec:
+  owner: platform-team

@@ -1,0 +1,5 @@
+site_name: Service Health Plugin
+nav:
+  - Overview: index.md
+plugins:
+  - techdocs-core

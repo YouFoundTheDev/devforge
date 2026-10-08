@@ -1,0 +1,22 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "devforge": {
+      "type": "object",
+      "properties": {
+        "mockMode": {
+          "type": "boolean",
+          "default": true,
+          "description": "Use deterministic local provider fixtures instead of configured live adapters."
+        },
+        "generatedServicesPath": {
+          "type": "string",
+          "default": "../../generated-services",
+          "description": "Directory where locally scaffolded service repositories are stored."
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

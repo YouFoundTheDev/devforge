@@ -11,6 +11,17 @@ import { createBackend } from '@backstage/backend-defaults';
 const backend = createBackend();
 
 backend.add(import('@backstage/plugin-app-backend'));
+backend.add(import('@internal/plugin-service-health-backend'));
+backend.add(
+  import('@internal/plugin-service-health-backend').then(module => ({
+    default: module.serviceHealthScaffolderModule,
+  })),
+);
+backend.add(
+  import('@internal/plugin-service-health-backend').then(module => ({
+    default: module.devforgeLocalCatalogModule,
+  })),
+);
 backend.add(import('@backstage/plugin-proxy-backend'));
 
 // scaffolder plugin
